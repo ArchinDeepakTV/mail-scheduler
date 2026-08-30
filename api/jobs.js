@@ -10,10 +10,13 @@ module.exports = async function handler(req, res) {
 
   // This lists recipient addresses/subjects across every job, so it's
   // gated behind the same key as scheduling (if you've set one).
+  // Accepts either an x-api-key header or an ?apiKey= query param, since
+  // some free-tier monitoring services (e.g. UptimeRobot) can't send
+  // custom headers.
   if (process.env.SCHEDULE_API_KEY) {
-    const key = req.headers["x-api-key"];
+    const key = req.headers["x-api-key"] || req.query.apiKey;
     if (key !== process.env.SCHEDULE_API_KEY) {
-      return res.status(401).json({ error: "Invalid or missing x-api-key" });
+      return res.status(401).json({ error: "Invalid or missing API key" });
     }
   }
 
