@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const { to, subject, body, sendAt } = req.body || {};
+  const { to, subject, body, sendAt, isHtml } = req.body || {};
 
   if (!to || !EMAIL_RE.test(to)) {
     return res.status(400).json({ error: "Valid 'to' email address is required" });
@@ -31,6 +31,9 @@ module.exports = async function handler(req, res) {
   }
   if (!sendAt) {
     return res.status(400).json({ error: "'sendAt' (ISO 8601 datetime) is required" });
+  }
+  if (isHtml !== undefined && typeof isHtml !== "boolean") {
+    return res.status(400).json({ error: "'isHtml' must be a boolean if provided" });
   }
 
   const sendAtDate = new Date(sendAt);
@@ -46,6 +49,7 @@ module.exports = async function handler(req, res) {
     to,
     subject,
     body,
+    isHtml: Boolean(isHtml), // defaults to false (plain text) if omitted
     sendAt: sendAtDate,
     status: "pending", // pending -> processing -> sent | failed
     attempts: 0,

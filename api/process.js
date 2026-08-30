@@ -17,20 +17,7 @@ module.exports = async function handler(req, res) {
   const authorized =
     expected && (auth === `Bearer ${expected}` || querySecret === expected);
   if (!authorized) {
-    // Diagnostics only — never the actual secret values — so we can tell
-    // "env var isn't set" apart from "values don't match" apart from
-    // "nothing was sent at all". Safe to leave in; delete once this is
-    // sorted if you'd rather not expose even this much.
-    return res.status(401).json({
-      error: "Unauthorized",
-      debug: {
-        envVarIsSet: Boolean(expected),
-        envVarLength: expected ? expected.length : 0,
-        querySecretReceived: querySecret !== undefined,
-        querySecretLength: querySecret ? querySecret.length : 0,
-        authHeaderReceived: Boolean(auth),
-      },
-    });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const jobs = await getJobsCollection();
@@ -53,7 +40,12 @@ module.exports = async function handler(req, res) {
     if (!job) break; // nothing left to do
 
     try {
-      await sendMail({ to: job.to, subject: job.subject, body: job.body });
+      await sendMail({
+        to: job.to,
+        subject: job.subject,
+        body: job.body,
+        isHtml: job.isHtml,
+      });
       await jobs.updateOne(
         { _id: job._id },
         { $set: { status: "sent", updatedAt: new Date() } }
