@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Schedule emails to be sent at a future time. Deploys to Vercel, stores jobs in MongoDB.",
   "engines": {
-    "node": ">=24.19.0"
+    "node": "=24.19.0"
   },
   "scripts": {
     "dev": "node server.local.js",
