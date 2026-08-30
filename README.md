@@ -105,6 +105,7 @@ Returns the job document (`pending` / `processing` / `sent` / `failed`,
 ```bash
 curl "https://<your-project>.vercel.app/api/jobs?status=pending&limit=50" \
   -H "x-api-key: <your SCHEDULE_API_KEY>"
+https://<your-project>.vercel.app/api/jobs?status=pending&limit=50&apiKey=<your SCHEDULE_API_KEY>
 ```
 
 - `status` (optional) — filter to one of `pending`, `processing`, `sent`, `failed`. Omit to get all.
