@@ -6,13 +6,31 @@ const MAX_ATTEMPTS = 3;
 
 module.exports = async function handler(req, res) {
   // This route does the actual work, so it must be locked down.
-  // Whatever calls it (Vercel Cron, cron-job.org, GitHub Actions...)
-  // needs to send this header. Vercel Cron does this automatically
-  // if you name the secret CRON_SECRET; external services need it
-  // configured manually as a custom header.
+  // Preferred: an Authorization: Bearer header (Vercel Cron sends this
+  // automatically when the secret is named CRON_SECRET; cron-job.org and
+  // GitHub Actions can be configured to send it too).
+  // Fallback: a ?secret= query param, for schedulers that can't send
+  // custom headers on their free tier (e.g. UptimeRobot).
+  const expected = process.env.CRON_SECRET;
   const auth = req.headers.authorization;
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
+  const querySecret = req.query.secret;
+  const authorized =
+    expected && (auth === `Bearer ${expected}` || querySecret === expected);
+  if (!authorized) {
+    // Diagnostics only — never the actual secret values — so we can tell
+    // "env var isn't set" apart from "values don't match" apart from
+    // "nothing was sent at all". Safe to leave in; delete once this is
+    // sorted if you'd rather not expose even this much.
+    return res.status(401).json({
+      error: "Unauthorized",
+      debug: {
+        envVarIsSet: Boolean(expected),
+        envVarLength: expected ? expected.length : 0,
+        querySecretReceived: querySecret !== undefined,
+        querySecretLength: querySecret ? querySecret.length : 0,
+        authHeaderReceived: Boolean(auth),
+      },
+    });
   }
 
   const jobs = await getJobsCollection();
