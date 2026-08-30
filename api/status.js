@@ -2,8 +2,10 @@ const { ObjectId } = require("mongodb");
 const { getJobsCollection } = require("../lib/mongodb");
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
+  if (req.method === "HEAD") {
+    // UptimeRobot's free-plan HTTP monitor sends HEAD by default.
+  } else if (req.method !== "GET") {
+    res.setHeader("Allow", "GET, HEAD");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -20,6 +22,10 @@ module.exports = async function handler(req, res) {
 
   if (!job) {
     return res.status(404).json({ error: "Job not found" });
+  }
+
+  if (req.method === "HEAD") {
+    return res.status(200).end();
   }
 
   return res.status(200).json(job);
