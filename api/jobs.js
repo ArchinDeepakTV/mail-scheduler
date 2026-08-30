@@ -3,8 +3,11 @@ const { getJobsCollection } = require("../lib/mongodb");
 const VALID_STATUSES = ["pending", "processing", "sent", "failed"];
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
+  if (req.method === "HEAD") {
+    // UptimeRobot's free-plan HTTP monitor sends HEAD by default.
+    // Run the same auth/logic path but return no body, per HTTP spec.
+  } else if (req.method !== "GET") {
+    res.setHeader("Allow", "GET, HEAD");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -50,6 +53,10 @@ module.exports = async function handler(req, res) {
     .sort({ _id: -1 }) // newest first
     .limit(pageSize)
     .toArray();
+
+  if (req.method === "HEAD") {
+    return res.status(200).end();
+  }
 
   return res.status(200).json({
     count: results.length,
