@@ -39,7 +39,31 @@ until send time. Instead:
    Any other SMTP provider (Zoho, Outlook, your own mail server) works the
    same way — just change the host/port.
 
-## 3. Deploy
+## 3. Test locally before deploying
+
+```bash
+npm install
+cp .env.example .env   # fill in real MongoDB Atlas + SMTP values
+
+# terminal 1: start the local API server
+npm run dev
+
+# terminal 2: run the end-to-end test
+#   This actually sends a real email via your SMTP account to TEST_TO_EMAIL.
+TEST_TO_EMAIL=you@example.com npm test
+```
+
+`test.js` walks through the full lifecycle against your local server:
+schedules an email 5 seconds out, confirms it starts `pending`, waits for
+`sendAt` to pass, calls the worker, and confirms the job flips to `sent`
+(and that the email actually lands in your inbox). If something's wrong
+with your Atlas connection string or SMTP credentials, it'll fail loudly
+here instead of silently in production.
+
+`server.local.js` is a small plain-Node server that runs the exact same
+`api/*.js` files Vercel will run — it's dev-only and never gets deployed.
+
+## 4. Deploy
 
 ```bash
 npm install
@@ -50,7 +74,7 @@ Set all the variables from `.env.example` in your Vercel project's
 Environment Variables settings (Project → Settings → Environment Variables).
 Redeploy after adding them.
 
-## 4. Wire up the external scheduler (Hobby plan)
+## 5. Wire up the external scheduler (Hobby plan)
 
 **Option A: cron-job.org (free, 1-minute precision)**
 1. Create an account, add a new cron job.
@@ -82,7 +106,24 @@ curl -X POST https://<your-project>.vercel.app/api/schedule \
     "to": "someone@example.com",
     "subject": "Reminder",
     "body": "Don'\''t forget the thing.",
-    "sendAt": "2026-09-01T09:00:00Z"
+    "sendAt": "2026-09-01T09:00:00Z",
+    "isHtml": false
+  }'
+```
+
+- `isHtml` (optional, default `false`) — set to `true` if `body` contains HTML markup. When `true`, the email is sent as HTML and a plain-text fallback is auto-generated for clients that don't render HTML. When `false` (or omitted), `body` is sent as plain text and line breaks are preserved for HTML-rendering clients too.
+
+Example with HTML:
+```bash
+curl -X POST https://<your-project>.vercel.app/api/schedule \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <your SCHEDULE_API_KEY>" \
+  -d '{
+    "to": "someone@example.com",
+    "subject": "Reminder",
+    "body": "<h2>Don'\''t forget!</h2><p>The thing is happening <b>today</b>.</p>",
+    "sendAt": "2026-09-01T09:00:00Z",
+    "isHtml": true
   }'
 ```
 
@@ -105,11 +146,6 @@ Returns the job document (`pending` / `processing` / `sent` / `failed`,
 ```bash
 curl "https://<your-project>.vercel.app/api/jobs?status=pending&limit=50" \
   -H "x-api-key: <your SCHEDULE_API_KEY>"
-```
-To use in uptimerobot
-```bash
-https://<your-project>.vercel.app/api/jobs?status=pending&limit=50&apiKey=<your SCHEDULE_API_KEY>
-
 ```
 
 - `status` (optional) — filter to one of `pending`, `processing`, `sent`, `failed`. Omit to get all.

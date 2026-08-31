@@ -13,15 +13,27 @@
 //   SEND_AT=2026-09-01T09:00:00Z \
 //   node schedule-email.js
 
-const BASE_URL = process.env.BASE_URL || "https://<your-project>.vercel.app";
-const API_KEY = process.env.SCHEDULE_API_KEY || "<your SCHEDULE_API_KEY>";
+const BASE_URL = process.env.BASE_URL || "https://mail-scheduler.adtv.space";
+const API_KEY = process.env.SCHEDULE_API_KEY || "thisisforthepurposesofjustmailing";
 
 const payload = {
-  to: process.env.TO || "someone@example.com",
-  subject: process.env.SUBJECT || "Reminder",
-  body: process.env.BODY || "Don't forget the thing.",
-  sendAt: process.env.SEND_AT || "2026-09-01T09:00:00Z",
-  isHtml: process.env.IS_HTML === "true",
+  to: process.env.TO || "adeepaktv@proton.me",
+  subject: process.env.SUBJECT || "JAV image sending",
+  body: process.env.BODY || `"<div style=\"font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;\">
+      <h2 style=\"color: #2c3e50;\">\u23f0 Reminder</h2>
+      <p style=\"font-size: 16px; color: #333;\">This is a <b>test email</b> to confirm HTML rendering works.</p>
+      <ul style=\"color: #555;\">
+          <li>Bullet point one<img src='https://www.javdatabase.com/covers/full/1f/1favr00008pl.webp'/></li>
+          <li>Bullet point two<img src='https://www.javdatabase.com/covers/full/ju/jums00137pl.webp'/></li>
+      </ul>
+      <p style=\"margin-top: 20px;\">
+          <a href=\"https://example.com\" style=\"background: #3498db; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px;\">Click here</a>
+      </p>
+      <p style=\"font-size: 12px; color: #999; margin-top: 30px;\">Sent by Mail Scheduler
+      </p>
+  </div>"`,
+  sendAt: process.env.SEND_AT || "2026-08-31T02:48:00Z",
+  isHtml: true,
 };
 
 async function scheduleEmail() {
